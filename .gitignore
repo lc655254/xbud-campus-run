@@ -1,0 +1,22 @@
+﻿# build outputs
+module/build/
+*.apk
+*.idsig
+*.jar
+*.class
+*.dex
+
+# python
+__pycache__/
+*.pyc
+
+# runtime data
+*.log
+run_logs/
+xbud_route.json
+xbud_route_*.json
+
+# local
+*.keystore
+.DS_Store
+Thumbs.db
