@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Generate a realistic, non-repeating campus route for the xbudloc module.
 
 The old route was a 380 m rectangle traversed ~21 times, so every lap drew the
@@ -27,10 +27,9 @@ import argparse
 import json
 import math
 import random
-import subprocess
+import adbcfg
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
 DEVICE_ROUTE = "/data/data/run.xbud.android/files/xbud_route.json"
 TMP_ROUTE = "/data/local/tmp/xbud_route.json"
 
@@ -399,12 +398,10 @@ def main() -> int:
               f"3.05 km takes ~{3050 / (sum(speeds)/len(speeds)):.0f}s")
 
     if args.push:
-        subprocess.run([ADB, "-s", SERIAL, "push", args.out, TMP_ROUTE], check=True,
-                       capture_output=True)
-        subprocess.run([ADB, "-s", SERIAL, "shell",
-                        "su -c 'cat %s > %s; chmod 666 %s'" % (TMP_ROUTE, DEVICE_ROUTE, DEVICE_ROUTE)],
-                       check=True, capture_output=True)
-        print("pushed to", DEVICE_ROUTE)
+        adbcfg.adb("push", args.out, TMP_ROUTE)
+        adbcfg.adb("shell",
+                   f"su -c 'cat {TMP_ROUTE} > {DEVICE_ROUTE}; chmod 666 {DEVICE_ROUTE}'")
+        print(f"pushed to {DEVICE_ROUTE} (serial={adbcfg.serial()})")
     return 0
 
 

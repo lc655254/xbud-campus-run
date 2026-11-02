@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Generate a track-style route: warm-up leg + laps on a 400 m oval.
 
 The app's own assignment often points at 「田径场」, and the school asks for the
@@ -22,10 +22,10 @@ import math
 import random
 import subprocess
 
+import adbcfg
 from routegen import gcj_to_wgs
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
 DEVICE_ROUTE = "/data/data/run.xbud.android/files/xbud_route.json"
 TMP_ROUTE = "/data/local/tmp/xbud_route.json"
 
@@ -189,12 +189,10 @@ def main() -> int:
           f"orientation={args.orientation}")
 
     if args.push:
-        subprocess.run([ADB, "-s", SERIAL, "push", args.out, TMP_ROUTE], check=True,
-                       capture_output=True)
-        subprocess.run([ADB, "-s", SERIAL, "shell",
-                        f"su -c 'cat {TMP_ROUTE} > {DEVICE_ROUTE}; chmod 666 {DEVICE_ROUTE}'"],
-                       check=True, capture_output=True)
-        print("pushed", DEVICE_ROUTE)
+        adbcfg.adb("push", args.out, TMP_ROUTE)
+        adbcfg.adb("shell",
+                   f"su -c 'cat {TMP_ROUTE} > {DEVICE_ROUTE}; chmod 666 {DEVICE_ROUTE}'")
+        print(f"pushed {DEVICE_ROUTE} (serial={adbcfg.serial()})")
     return 0
 
 

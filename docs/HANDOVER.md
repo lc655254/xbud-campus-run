@@ -1,4 +1,4 @@
-﻿# 小步点 · MuMu · LSPosed 交接文档（2026-10-20 22:10 第二版）
+# 小步点 · MuMu · LSPosed 交接文档（2026-10-20 22:10 第二版）
 
 > **结论先行**
 > 1. **达标已经可以稳定复现**，而且不再依赖「点位绿了没有」：
@@ -341,6 +341,33 @@ powershell -File daily.ps1 -Mode campus   # 想跑校园随机单圈时
    要更自然可换 800~1200 m 校园路网环线（改 `D:\Work\xbud_route.json`，模块进程启动时加载）。
 4. **想彻底消掉首传失败**：怀疑是模块的 `TeeStream/HTTP` hook 干扰上传流，
    可以加 `httpoff` 命令在跑之前关掉 HTTP 二层 hook。
+
+## 十二、adb 端点自动识别（2026-11-02）
+
+MuMu 多开时每个实例的 adb 端口不同（实例 0 常见 `16384`，实例 1 常见 `16416`），
+早期把 `SERIAL = "127.0.0.1:16384"` 写死在脚本里，换实例就整个跑不起来。
+
+现在统一由 `toolkit/adbcfg.py` 解析：
+
+```
+XBUD_SERIAL       直接指定端点（最优先）
+XBUD_MUMU_INDEX   指定实例序号
+MuMuManager info -v all → is_android_started=true 的第一个实例
+adb devices       唯一处于 device 状态的设备
+127.0.0.1:16384   兜底
+```
+
+`autorun.py` / `trackgen.py` / `track_route.py` / `daily_run.py` / `xcmd.ps1`
+以及遗留的 `model.py` / `route.py` / `ui.py` / `checkpoints.py` 全部走这套解析，
+日志里会打印 `serial=127.0.0.1:16416 instances=[1:... (实例名)]`。
+
+```powershell
+python toolkit\adbcfg.py                 # 看当前解析结果
+set XBUD_MUMU_INDEX=1                    # 强制用实例 1
+set XBUD_SERIAL=127.0.0.1:16416          # 强制指定端点
+set XBUD_VERBOSE=1                       # 打印解析过程
+```
+
 
 
 

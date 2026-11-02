@@ -13,16 +13,17 @@ keeps hanging on adb's daemonised output and mangles UTF-8 scripts, so the
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
 
+import adbcfg
 import autorun as a
 import trackgen
 
-ADB = trackgen.ADB
-SERIAL = trackgen.SERIAL
-MUMU = r"D:\MuMuPlayer\nx_main\MuMuManager.exe"
+ADB = adbcfg.ADB
+MUMU = adbcfg.MUMU
 TOOLKIT = r"D:\Work\xbud_toolkit"
 MIN_KM = 2.5
 
@@ -35,32 +36,37 @@ def run(cmd: list[str], timeout: int = 120) -> str:
 
 
 def device_online() -> bool:
-    return f"{SERIAL}\tdevice" in run([ADB, "devices"])
+    return adbcfg.is_online(adbcfg.serial(refresh=True))
 
 
 def connect(verbose: bool = True) -> bool:
-    run([ADB, "start-server"], timeout=60)
-    run([ADB, "connect", SERIAL], timeout=60)
-    for _ in range(3):
-        if device_online():
-            return True
-        time.sleep(2)
+    adbcfg.serial(refresh=True)
+    if adbcfg.connect(adbcfg.serial()):
+        if verbose:
+            a.log(f"device: {adbcfg.describe()}")
+        return True
     return False
 
 
 def ensure_device() -> bool:
+    """Connect to whichever MuMu instance is up; launch one only if none is."""
     if connect():
         return True
-    info = run([MUMU, "info", "-v", "0"], timeout=60)
-    if '"is_android_started": true' not in info.replace('":true', '": true'):
-        a.log("MuMu is not started, launching")
-        run([MUMU, "control", "-v", "0", "launch"], timeout=120)
+
+    running = adbcfg.mumu_running()
+    if running:
+        a.log(f"MuMu running but adb not reachable yet: {adbcfg.describe()}")
     else:
-        a.log("MuMu is running but adb is not connected yet")
+        index = os.environ.get("XBUD_MUMU_INDEX", "0").strip() or "0"
+        a.log(f"no MuMu instance running, launching instance {index}")
+        run([MUMU, "control", "-v", index, "launch"], timeout=180)
+        time.sleep(5)
+
     for i in range(18):
-        time.sleep(10)
         if connect(verbose=False):
+            a.log(f"device ready: {adbcfg.describe()}")
             return True
+        time.sleep(10)
         a.log(f"waiting for device ({i})")
     return False
 

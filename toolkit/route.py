@@ -24,9 +24,10 @@ import math
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+import adbcfg
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
+SERIAL = adbcfg.serial()
 PREFS = "/data/data/com.yinshibai.location/shared_prefs/fake_location.xml"
 PKG = "com.yinshibai.location"
 

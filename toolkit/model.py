@@ -17,9 +17,10 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+import adbcfg
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
+SERIAL = adbcfg.serial()
 MODULE_DIR = "/data/adb/modules/xbud_profile"
 
 PROFILES = {

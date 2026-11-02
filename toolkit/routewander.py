@@ -332,15 +332,12 @@ def main() -> int:
         print("preview", out)
 
     if args.push:
-        import subprocess
-        adb = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-        serial = "127.0.0.1:16384"
+        import adbcfg
         dst = "/data/data/run.xbud.android/files/xbud_route.json"
         tmp = "/data/local/tmp/xbud_route.json"
-        subprocess.run([adb, "-s", serial, "push", args.out, tmp], check=True, capture_output=True)
-        subprocess.run([adb, "-s", serial, "shell",
-                        f"su -c 'cat {tmp} > {dst}; chmod 666 {dst}'"], check=True, capture_output=True)
-        print("pushed", dst)
+        adbcfg.adb("push", args.out, tmp)
+        adbcfg.adb("shell", f"su -c 'cat {tmp} > {dst}; chmod 666 {dst}'")
+        print(f"pushed {dst} (serial={adbcfg.serial()})")
     return 0
 
 

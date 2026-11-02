@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """One-shot: read the 田径场 marker from the app, build a track route, push it.
 
 Order matters: the module only knows a route when the app process starts, so the
@@ -19,11 +19,11 @@ import json
 import subprocess
 import time
 
+import adbcfg
 import autorun as a
 import trackgen
 
-ADB = trackgen.ADB
-SERIAL = trackgen.SERIAL
+ADB = adbcfg.ADB
 DEVICE_ROUTE = trackgen.DEVICE_ROUTE
 TMP_ROUTE = trackgen.TMP_ROUTE
 
@@ -50,11 +50,10 @@ def main() -> int:
         json.dump(data, handle, separators=(",", ":"))
     print(f"route: {len(data['points'])} points, {data['profile'][-1][0]:.0f} m")
 
-    subprocess.run([ADB, "-s", SERIAL, "push", args.out, TMP_ROUTE], check=True, capture_output=True)
-    subprocess.run([ADB, "-s", SERIAL, "shell",
-                    f"su -c 'cat {TMP_ROUTE} > {DEVICE_ROUTE}; chmod 666 {DEVICE_ROUTE}'"],
-                   check=True, capture_output=True)
-    print("pushed", DEVICE_ROUTE)
+    adbcfg.adb("push", args.out, TMP_ROUTE)
+    adbcfg.adb("shell",
+               f"su -c 'cat {TMP_ROUTE} > {DEVICE_ROUTE}; chmod 666 {DEVICE_ROUTE}'")
+    print(f"pushed {DEVICE_ROUTE} (serial={adbcfg.serial()})")
 
     # The module loads the route at process start.
     a.adb("shell", "am force-stop run.xbud.android")

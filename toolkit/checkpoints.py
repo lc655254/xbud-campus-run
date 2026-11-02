@@ -18,9 +18,10 @@ import re
 import subprocess
 import sys
 import time
+import adbcfg
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
+SERIAL = adbcfg.serial()
 CMD = "/data/local/tmp/xbud_cmd"
 
 

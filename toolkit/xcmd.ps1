@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 param(
     [Parameter(Position = 0, Mandatory = $true)][string]$Command,
     [int]$WaitMs = 1500
@@ -10,6 +10,11 @@ param(
 .DESCRIPTION
     命令写进 /data/data/run.xbud.android/files/xbud_cmd（root 写 + chmod 666），
     模块每 400 ms 轮询一次。命令后面会自动加时间戳，避免和上一条重复被忽略。
+
+    adb 端点不再写死：默认交给 adbcfg.py 解析「当前正在运行的 MuMu 实例」
+    （MuMuManager info -v all 里的 adb_host_ip:adb_port），也可以手动指定：
+      $env:XBUD_SERIAL = "127.0.0.1:16416"
+      $env:XBUD_MUMU_INDEX = "1"
 
 .EXAMPLE
     .\xcmd.ps1 state
@@ -23,10 +28,21 @@ param(
     .\xcmd.ps1 polygon       # dump 校园围栏
 #>
 
+$ErrorActionPreference = 'Continue'
+$toolkit = $PSScriptRoot
+if (-not $toolkit) { $toolkit = 'D:\Work\xbud_toolkit' }
 $adb = 'D:\MuMuPlayer\nx_device\15.0\shell\adb.exe'
-$serial = '127.0.0.1:16384'
-$tmp = Join-Path $env:TEMP 'xbud_cmd.txt'
+$env:PYTHONPATH = $toolkit
 
+# 解析当前运行的 MuMu 实例（失败再退回默认端口）
+$serial = (& python -c "import adbcfg; adbcfg.connect(adbcfg.serial()); print(adbcfg.serial())" 2>$null) -join ''
+$serial = $serial.Trim()
+if (-not $serial) {
+    $serial = '127.0.0.1:16384'
+    Write-Host "adbcfg failed, falling back to $serial" -ForegroundColor Yellow
+}
+
+$tmp = Join-Path $env:TEMP 'xbud_cmd.txt'
 $stamp = Get-Date -Format 'HHmmssfff'
 "$Command $stamp" | Out-File -Encoding ascii $tmp
 
@@ -37,7 +53,7 @@ Start-Sleep -Milliseconds $WaitMs
 
 $appPid = (& $adb -s $serial shell pidof run.xbud.android 2>$null) -join ''
 if (-not $appPid.Trim()) {
-    Write-Host 'app not running: start 小步点 first (the module only polls while the app is alive)' -ForegroundColor Yellow
+    Write-Host "app not running on $serial : start 小步点 first (the module only polls while the app is alive)" -ForegroundColor Yellow
     exit 0
 }
 

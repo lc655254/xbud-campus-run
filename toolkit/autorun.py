@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Small-step (小步点) 学分跑 auto-runner.
 
 Drives one complete qualifying run without touching the screen:
@@ -32,9 +32,13 @@ import sys
 import time
 from dataclasses import dataclass
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
-PKG = "run.xbud.android"
+import adbcfg
+
+ADB = adbcfg.ADB
+PKG = adbcfg.PKG
+# The adb endpoint is resolved at runtime from MuMuManager's instance table
+# (see adbcfg.py): XBUD_SERIAL > XBUD_MUMU_INDEX > first running instance.
+SERIAL = None  # kept for backwards compatibility, use adbcfg.serial()
 
 CMD_FILE = "/data/data/run.xbud.android/files/xbud_cmd"
 TMP_CMD = "/data/local/tmp/xbud_cmd.txt"
@@ -63,16 +67,8 @@ VIEW_RE = re.compile(
 
 # --------------------------------------------------------------------------- io
 def adb(*args: str, timeout: int = 60) -> str:
-    proc = subprocess.run(
-        [ADB, "-s", SERIAL, *args],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-    )
-    return (proc.stdout or "") + (proc.stderr or "")
+    """adb against whichever MuMu instance is running (resolved by adbcfg)."""
+    return adbcfg.adb(*args, timeout=timeout)
 
 
 def log(message: str) -> None:

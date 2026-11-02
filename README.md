@@ -50,6 +50,7 @@ module/               LSPosed 模块（Java，约 2700 行）
   build.ps1          javac + d8 + aapt2 + apksigner 一键打包
   AndroidManifest.xml
 toolkit/             电脑侧脚本
+  adbcfg.py          自动识别「当前运行的 MuMu 实例」及其 adb 端口
   autorun.py         核心状态机（开跑/监控/收尾/重传）
   trackgen.py        400 m 操场椭圆路线
   track_route.py     读图钉 → 生成 → 推送 → 重启 App
@@ -73,12 +74,31 @@ docs/
 | 项 | 值 |
 |---|---|
 | 模拟器 | MuMu Player 15（Android 15 x86_64），KernelSU root |
-| ADB | `D:\MuMuPlayer\nx_device\15.0\shell\adb.exe`，`127.0.0.1:16384` |
+| ADB | `D:\MuMuPlayer\nx_device\15.0\shell\adb.exe`，端口**自动识别** |
 | Xposed | LSPosed + Zygisk Next |
 | 目标 App | 小步点 2.6.8 `run.xbud.android` |
 
-路径都在脚本顶部常量里，换机器改这几行即可：
-`autorun.py` 的 `ADB/SERIAL`、`daily_run.py` 的 `TOOLKIT/MUMU`、`module/build.ps1` 的 `$sdk`。
+### 多开 / 端口自动识别
+
+MuMu 每个实例都有自己的 adb 端口（实例 0 常见 `16384`，实例 1 常见 `16416`），
+`adbcfg.py` 会读 `MuMuManager.exe info -v all`，挑**真正在运行**的那个实例：
+
+```powershell
+python toolkit\adbcfg.py
+# serial=127.0.0.1:16416  instances=[1:127.0.0.1:16416(实例名)]
+```
+
+优先级：
+
+1. `XBUD_SERIAL`：直接指定端点，如 `set XBUD_SERIAL=127.0.0.1:16416`
+2. `XBUD_MUMU_INDEX`：指定实例序号，如 `set XBUD_MUMU_INDEX=1`
+3. MuMuManager 里 `is_android_started=true` 的第一个实例
+4. `adb devices` 里唯一处于 `device` 状态的设备
+5. 兜底 `127.0.0.1:16384`
+
+所有脚本（`autorun.py` / `trackgen.py` / `track_route.py` / `daily_run.py` / `xcmd.ps1` …）
+都走这套解析，换实例、换机器不用再改代码。剩下的路径常量只有
+`adbcfg.py` 的 `ADB/MUMU`、`daily_run.py` 的 `TOOLKIT`、`module/build.ps1` 的 `$sdk`。
 
 ## 快速开始
 

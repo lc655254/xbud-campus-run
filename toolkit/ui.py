@@ -9,9 +9,10 @@ import sys
 import time
 
 from PIL import Image
+import adbcfg
 
-ADB = r"D:\MuMuPlayer\nx_device\15.0\shell\adb.exe"
-SERIAL = "127.0.0.1:16384"
+ADB = adbcfg.ADB
+SERIAL = adbcfg.serial()
 
 
 def adb(*args: str) -> str:
